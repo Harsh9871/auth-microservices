@@ -259,5 +259,3 @@ export const verifyUser = async (req, res, next) => {
 
 **Made with ⚡ by Harsh Raithatha (Commando)**
 *Secure. Scalable. Smart.*
-
-```
