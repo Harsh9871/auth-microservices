@@ -7,18 +7,18 @@ class AuthController {
             const result = await AuthService.register(name, email, password, app_id);
             res.status(result.success ? 201 : 400).json(result);
         } catch (error) {
-            console.error("Register error:", error);
+            console.error("Register controller error:", error);
             res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
 
     async login(req, res) {
         try {
-            const { email, password } = req.body;
-            const result = await AuthService.login(email, password);
+            const { email, password, app_id } = req.body; // ← Added app_id
+            const result = await AuthService.login(email, password, app_id);
             res.status(result.success ? 200 : 401).json(result);
         } catch (error) {
-            console.error("Login error:", error);
+            console.error("Login controller error:", error);
             res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -29,7 +29,7 @@ class AuthController {
             const result = await AuthService.validateToken(token);
             res.status(result.success ? 200 : 401).json(result);
         } catch (error) {
-            console.error("Token validation error:", error);
+            console.error("Token validation controller error:", error);
             res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
@@ -53,6 +53,17 @@ class AuthController {
             return res.status(result.success ? 200 : 401).json(result);
         } catch (err) {
             console.error("Error in getCurrentUserController:", err);
+            return res.status(500).json({ success: false, message: "Server error" });
+        }
+    }
+
+    async logoutController(req, res) {
+        try {
+            const { refreshToken } = req.body;
+            const result = await AuthService.logout(refreshToken);
+            return res.status(result.success ? 200 : 400).json(result);
+        } catch (err) {
+            console.error("Error in logoutController:", err);
             return res.status(500).json({ success: false, message: "Server error" });
         }
     }
