@@ -43,6 +43,9 @@ model User {
   updatedAt DateTime  @updatedAt
 
   @@unique([email, app_id])
+  @@index([app_id, createdAt]) 
+  @@index([app_id, name]) 
+  @@index([app_id, email]) 
 }
 
 model RefreshToken {

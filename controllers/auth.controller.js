@@ -3,11 +3,13 @@ import AuthService from "../services/auth.service.js";
 class AuthController {
     async register(req, res) {
         try {
-            const { name, email, password, app_id } = req.body;
-            const result = await AuthService.register(name, email, password, app_id);
+            const { name, email, password, app_id, role } = req.body; // Add role here
+            console.log('🎯 Controller received role:', role); // Debug log
+            
+            const result = await AuthService.register(name, email, password, app_id, role);
             res.status(result.success ? 201 : 400).json(result);
         } catch (error) {
-            console.error("Register controller error:", error);
+            console.error("Register error:", error);
             res.status(500).json({ success: false, message: "Internal server error" });
         }
     }
