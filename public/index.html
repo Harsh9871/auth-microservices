@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auth Microservice - Documentation & Testing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    pre, code { font-family: 'Fira Code', monospace; }
+    .tab-active { 
+      background: #4F46E5; 
+      color: white;
+    }
+    .api-test-pass { border-left: 4px solid #10B981; }
+    .api-test-fail { border-left: 4px solid #EF4444; }
+    .api-test-running { border-left: 4px solid #F59E0B; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen text-gray-100">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-6">
+      <h1 class="text-3xl font-bold flex items-center gap-3">
+        <i class="fas fa-shield-alt"></i> Auth Microservice API
+      </h1>
+      <p class="text-indigo-100 mt-2">Multi-tenant authentication service with email verification</p>
+    </div>
+  </header>
+
+  <!-- Tabs Navigation -->
+  <div class="bg-gray-800 border-b border-gray-700">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex">
+        <button id="docsTab" class="tab-active px-6 py-4 font-medium rounded-t-lg transition-colors" onclick="switchTab('docs')">
+          <i class="fas fa-book mr-2"></i>Documentation
+        </button>
+        <button id="testTab" class="px-6 py-4 font-medium text-gray-400 hover:text-white rounded-t-lg transition-colors" onclick="switchTab('test')">
+          <i class="fas fa-vial mr-2"></i>API Testing
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto p-6">
+
+    <!-- Documentation Tab -->
+    <div id="docsContent" class="space-y-8">
+      <!-- Overview -->
+      <section class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-rocket text-indigo-400"></i> Overview
+        </h2>
+        <p class="text-gray-300 mb-4">
+          A multi-tenant authentication microservice built with Node.js, Express, PostgreSQL, and Prisma ORM. 
+          Supports multiple applications with isolated user bases and includes email verification.
+        </p>
+        <div class="grid md:grid-cols-2 gap-4 mt-6">
+          <div class="bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-semibold text-green-400 mb-2"><i class="fas fa-check-circle mr-2"></i>Features</h3>
+            <ul class="text-sm text-gray-300 space-y-1">
+              <li>• Multi-tenant architecture (app_id based isolation)</li>
+              <li>• JWT access & refresh tokens</li>
+              <li>• Email verification with OTP</li>
+              <li>• Role-based access control (user/admin)</li>
+              <li>• Admin user management</li>
+              <li>• Token validation endpoint</li>
+            </ul>
+          </div>
+          <div class="bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-semibold text-blue-400 mb-2"><i class="fas fa-cog mr-2"></i>Tech Stack</h3>
+            <ul class="text-sm text-gray-300 space-y-1">
+              <li>• Node.js + Express</li>
+              <li>• PostgreSQL + Prisma ORM</li>
+              <li>• JWT authentication</li>
+              <li>• bcrypt password hashing</li>
+              <li>• CORS enabled</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- API Endpoints -->
+      <section class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <i class="fas fa-code text-purple-400"></i> API Endpoints
+        </h2>
+
+        <div class="space-y-6">
+          <!-- Authentication Endpoints -->
+          <div>
+            <h3 class="text-xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">
+              <i class="fas fa-user-lock mr-2"></i>Authentication
+            </h3>
+            
+            <div class="space-y-4">
+              <!-- Register -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-green-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/register</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Register a new user with email verification</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "name": "string (required)",
+  "email": "string (required)",
+  "password": "string (required, min 3)",
+  "app_id": "string (required)",
+  "role": "string (optional: user|admin)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Send Verification -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-blue-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/send-verification</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Send email verification OTP</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "email": "string (required)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Verify Email -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-blue-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/verify-email</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Verify email with OTP</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "email": "string (required)",
+  "otp": "string (required)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Login -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-green-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/login</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Authenticate user and get tokens</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "email": "string (required)",
+  "password": "string (required)",
+  "app_id": "string (required)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Get Profile -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-yellow-600 text-white px-2 py-1 rounded text-sm font-mono">GET</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/me</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Get current user profile (Requires Bearer token)</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Headers:</div>
+                  <pre class="mt-1 text-green-400">Authorization: Bearer &lt;token&gt;</pre>
+                </div>
+              </div>
+
+              <!-- Validate Token -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-green-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/validate-token</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Validate any JWT token</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "token": "string (required)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Refresh Token -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-green-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/refresh-token</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Get new access token using refresh token</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "refreshToken": "string (required)"
+}</pre>
+                </div>
+              </div>
+
+              <!-- Logout -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-green-600 text-white px-2 py-1 rounded text-sm font-mono">POST</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/auth/logout</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Invalidate refresh token</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Body:</div>
+                  <pre class="mt-1 text-green-400">{
+  "refreshToken": "string (required)"
+}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Management Endpoints -->
+          <div>
+            <h3 class="text-xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">
+              <i class="fas fa-users mr-2"></i>User Management (Admin Only)
+            </h3>
+            
+            <div class="space-y-4">
+              <!-- Get All Users -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-yellow-600 text-white px-2 py-1 rounded text-sm font-mono">GET</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/users</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Get paginated users from same app (Admin only)</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Headers:</div>
+                  <pre class="mt-1 text-green-400">Authorization: Bearer &lt;admin_token&gt;</pre>
+                  <div class="text-yellow-400 mt-2">Query Params:</div>
+                  <pre class="mt-1 text-green-400">?page=1&limit=10&search=name</pre>
+                </div>
+              </div>
+
+              <!-- Delete User -->
+              <div class="bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="bg-red-600 text-white px-2 py-1 rounded text-sm font-mono">DELETE</span>
+                  <code class="text-sm font-mono bg-gray-800 px-3 py-1 rounded">/api/users/:id</code>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Delete user from same app (Admin only)</p>
+                <div class="bg-gray-900 p-3 rounded text-sm font-mono">
+                  <div class="text-yellow-400">Headers:</div>
+                  <pre class="mt-1 text-green-400">Authorization: Bearer &lt;admin_token&gt;</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testing App ID -->
+      <section class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-vial text-green-400"></i> Testing Information
+        </h2>
+        <div class="bg-gray-700 p-4 rounded-lg">
+          <h3 class="font-semibold text-yellow-400 mb-2">Test Application ID</h3>
+          <p class="text-gray-300">Use the following <code class="bg-gray-800 px-2 py-1 rounded">app_id</code> for testing:</p>
+          <div class="mt-2 p-3 bg-gray-900 rounded font-mono text-green-400">
+            app_1
+          </div>
+          <p class="text-gray-400 text-sm mt-2">
+            All user registrations and logins should use this app_id for testing purposes.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Testing Tab -->
+    <div id="testContent" class="hidden space-y-6">
+      <!-- Controls -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-vial text-green-400"></i> API Testing Console
+        </h2>
+        
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-semibold text-green-400 mb-2">Current Tokens</h3>
+            <div id="tokenStatus" class="text-sm space-y-1">
+              <div>Access Token: <span id="accessTokenStatus" class="text-red-400">Not set</span></div>
+              <div>Refresh Token: <span id="refreshTokenStatus" class="text-red-400">Not set</span></div>
+            </div>
+          </div>
+          <div class="bg-gray-700 p-4 rounded-lg">
+            <h3 class="font-semibold text-blue-400 mb-2">Quick Actions</h3>
+            <div class="flex gap-2">
+              <button onclick="clearTokens()" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm flex items-center gap-1">
+                <i class="fas fa-trash"></i> Clear Tokens
+              </button>
+              <button onclick="clearTestResults()" class="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded text-sm flex items-center gap-1">
+                <i class="fas fa-broom"></i> Clear Results
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Endpoints List -->
+        <div class="space-y-4" id="testEndpoints">
+          <!-- Tests will be dynamically added here -->
+        </div>
+      </div>
+
+      <!-- Results Console -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-terminal text-purple-400"></i> Test Results
+        </h3>
+        <div id="testConsole" class="bg-black rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm space-y-2">
+          <div class="text-green-400">Ready for testing. Select an endpoint above to begin.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const BASE_URL = window.location.origin;
+    let currentTokens = {
+      accessToken: getCookie('accessToken'),
+      refreshToken: getCookie('refreshToken')
+    };
+
+    // Tab switching
+    function switchTab(tab) {
+      document.getElementById('docsContent').classList.toggle('hidden', tab !== 'docs');
+      document.getElementById('testContent').classList.toggle('hidden', tab !== 'test');
+      document.getElementById('docsTab').classList.toggle('tab-active', tab === 'docs');
+      document.getElementById('docsTab').classList.toggle('text-gray-400', tab !== 'docs');
+      document.getElementById('testTab').classList.toggle('tab-active', tab === 'test');
+      document.getElementById('testTab').classList.toggle('text-gray-400', tab !== 'test');
+      
+      if (tab === 'test') {
+        initializeTestEndpoints();
+        updateTokenStatus();
+      }
+    }
+
+    // Cookie management
+    function setCookie(name, value, days = 7) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+    }
+
+    function getCookie(name) {
+      return document.cookie.split('; ').reduce((r, v) => {
+        const parts = v.split('=');
+        return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+      }, '');
+    }
+
+    function clearTokens() {
+      document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+      document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+      currentTokens = { accessToken: null, refreshToken: null };
+      updateTokenStatus();
+      logToConsole('Tokens cleared', 'success');
+    }
+
+    function updateTokenStatus() {
+      document.getElementById('accessTokenStatus').textContent = 
+        currentTokens.accessToken ? '✓ Set' : '✗ Not set';
+      document.getElementById('accessTokenStatus').className = 
+        currentTokens.accessToken ? 'text-green-400' : 'text-red-400';
+      
+      document.getElementById('refreshTokenStatus').textContent = 
+        currentTokens.refreshToken ? '✓ Set' : '✗ Not set';
+      document.getElementById('refreshTokenStatus').className = 
+        currentTokens.refreshToken ? 'text-green-400' : 'text-red-400';
+    }
+
+    // Test endpoints configuration
+    const testEndpoints = [
+      {
+        name: "Register User",
+        method: "POST",
+        path: "/api/auth/register",
+        inputs: [
+          { name: "name", type: "text", value: "Test User", required: true },
+          { name: "email", type: "email", value: `test${Date.now()}@example.com`, required: true },
+          { name: "password", type: "password", value: "password123", required: true },
+          { name: "app_id", type: "text", value: "app_1", required: true },
+          { name: "role", type: "text", value: "user", required: false }
+        ]
+      },
+      {
+        name: "Send Verification Email",
+        method: "POST", 
+        path: "/api/auth/send-verification",
+        inputs: [
+          { name: "email", type: "email", value: "", required: true }
+        ]
+      },
+      {
+        name: "Verify Email",
+        method: "POST",
+        path: "/api/auth/verify-email", 
+        inputs: [
+          { name: "email", type: "email", value: "", required: true },
+          { name: "otp", type: "text", value: "", required: true }
+        ]
+      },
+      {
+        name: "Login",
+        method: "POST",
+        path: "/api/auth/login",
+        inputs: [
+          { name: "email", type: "email", value: "", required: true },
+          { name: "password", type: "password", value: "", required: true },
+          { name: "app_id", type: "text", value: "app_1", required: true }
+        ]
+      },
+      {
+        name: "Get Profile",
+        method: "GET", 
+        path: "/api/auth/me",
+        requiresAuth: true
+      },
+      {
+        name: "Validate Token",
+        method: "POST",
+        path: "/api/auth/validate-token", 
+        inputs: [
+          { name: "token", type: "text", value: "", required: true }
+        ]
+      },
+      {
+        name: "Refresh Token", 
+        method: "POST",
+        path: "/api/auth/refresh-token",
+        inputs: [
+          { name: "refreshToken", type: "text", value: "", required: true }
+        ]
+      },
+      {
+        name: "Logout",
+        method: "POST", 
+        path: "/api/auth/logout",
+        inputs: [
+          { name: "refreshToken", type: "text", value: "", required: true }
+        ]
+      },
+      {
+        name: "Get All Users",
+        method: "GET",
+        path: "/api/users",
+        requiresAuth: true,
+        inputs: [
+          { name: "page", type: "number", value: "1", required: false },
+          { name: "limit", type: "number", value: "10", required: false },
+          { name: "search", type: "text", value: "", required: false }
+        ]
+      }
+    ];
+
+    function initializeTestEndpoints() {
+      const container = document.getElementById('testEndpoints');
+      container.innerHTML = '';
+
+      testEndpoints.forEach((endpoint, index) => {
+        const endpointEl = document.createElement('div');
+        endpointEl.className = 'bg-gray-700 rounded-lg p-4 api-test-running';
+        endpointEl.id = `endpoint-${index}`;
+        
+        let inputsHTML = '';
+        if (endpoint.inputs) {
+          inputsHTML = endpoint.inputs.map(input => `
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-gray-300 w-20">${input.name}:</label>
+              <input type="${input.type}" 
+                     id="${endpoint.path}-${input.name}" 
+                     value="${input.value}"
+                     placeholder="${input.required ? 'required' : 'optional'}"
+                     class="flex-1 bg-gray-600 border border-gray-500 rounded px-3 py-1 text-sm text-white">
+            </div>
+          `).join('');
+        }
+
+        endpointEl.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <span class="bg-${
+                endpoint.method === 'GET' ? 'yellow' : 
+                endpoint.method === 'POST' ? 'green' : 
+                endpoint.method === 'DELETE' ? 'red' : 'blue'
+              }-600 text-white px-2 py-1 rounded text-sm font-mono">${endpoint.method}</span>
+              <span class="font-medium">${endpoint.name}</span>
+              <code class="text-sm text-gray-400">${endpoint.path}</code>
+            </div>
+            <button onclick="runTest(${index})" 
+                    class="bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-sm flex items-center gap-1">
+              <i class="fas fa-play"></i> Test
+            </button>
+          </div>
+          ${inputsHTML ? `<div class="space-y-2 mt-2">${inputsHTML}</div>` : ''}
+          ${endpoint.requiresAuth ? '<div class="text-xs text-yellow-400 mt-2"><i class="fas fa-lock"></i> Requires authentication</div>' : ''}
+        `;
+        
+        container.appendChild(endpointEl);
+      });
+    }
+
+    async function runTest(index) {
+      const endpoint = testEndpoints[index];
+      const endpointEl = document.getElementById(`endpoint-${index}`);
+      
+      // Update UI to show running state
+      endpointEl.className = 'bg-gray-700 rounded-lg p-4 api-test-running';
+      
+      logToConsole(`\n> Testing: ${endpoint.method} ${endpoint.path}`, 'info');
+
+      // Prepare request
+      const headers = { 'Content-Type': 'application/json' };
+      
+      // Add authorization if required and available
+      if (endpoint.requiresAuth && currentTokens.accessToken) {
+        headers['Authorization'] = `Bearer ${currentTokens.accessToken}`;
+        logToConsole('Using stored access token for authentication', 'debug');
+      }
+
+      // Prepare body if it's a POST request with inputs
+      let body = null;
+      if (endpoint.inputs && endpoint.method !== 'GET') {
+        body = {};
+        endpoint.inputs.forEach(input => {
+          const inputEl = document.getElementById(`${endpoint.path}-${input.name}`);
+          if (inputEl && inputEl.value) {
+            body[input.name] = input.type === 'number' ? parseInt(inputEl.value) : inputEl.value;
+          }
+        });
+      }
+
+      // Prepare URL with query params for GET requests
+      let url = endpoint.path;
+      if (endpoint.inputs && endpoint.method === 'GET') {
+        const params = new URLSearchParams();
+        endpoint.inputs.forEach(input => {
+          const inputEl = document.getElementById(`${endpoint.path}-${input.name}`);
+          if (inputEl && inputEl.value) {
+            params.append(input.name, inputEl.value);
+          }
+        });
+        if (params.toString()) {
+          url += '?' + params.toString();
+        }
+      }
+
+      try {
+        const response = await fetch(BASE_URL + url, {
+          method: endpoint.method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined
+        });
+
+        const responseText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = responseText;
+        }
+
+        // Log results
+        logToConsole(`Status: ${response.status} ${response.statusText}`, 
+                    response.status < 400 ? 'success' : 'error');
+        logToConsole(`Response: ${JSON.stringify(data, null, 2)}`, 'debug');
+
+        // Save tokens if they exist in response
+        if (data && data.accessToken) {
+          currentTokens.accessToken = data.accessToken;
+          setCookie('accessToken', data.accessToken);
+          logToConsole('✓ Access token saved', 'success');
+        }
+        if (data && data.refreshToken) {
+          currentTokens.refreshToken = data.refreshToken;
+          setCookie('refreshToken', data.refreshToken);
+          logToConsole('✓ Refresh token saved', 'success');
+        }
+
+        // Update endpoint status
+        endpointEl.className = `bg-gray-700 rounded-lg p-4 ${
+          response.status < 400 ? 'api-test-pass' : 'api-test-fail'
+        }`;
+
+        updateTokenStatus();
+
+      } catch (error) {
+        logToConsole(`Network error: ${error.message}`, 'error');
+        endpointEl.className = 'bg-gray-700 rounded-lg p-4 api-test-fail';
+      }
+    }
+
+    function logToConsole(message, type = 'info') {
+      const consoleEl = document.getElementById('testConsole');
+      const div = document.createElement('div');
+      div.className = type === 'error' ? 'text-red-400' : 
+                     type === 'success' ? 'text-green-400' :
+                     type === 'debug' ? 'text-blue-400' : 'text-gray-300';
+      div.textContent = message;
+      consoleEl.appendChild(div);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function clearTestResults() {
+      document.getElementById('testConsole').innerHTML = 
+        '<div class="text-green-400">Console cleared. Ready for testing.</div>';
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateTokenStatus();
+    });
+  </script>
+</body>
+</html>

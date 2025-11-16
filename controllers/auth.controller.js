@@ -1,11 +1,11 @@
 import AuthService from "../services/auth.service.js";
-
+import OTPController from "./otp.controller.js";
 class AuthController {
     async register(req, res) {
         try {
             const { name, email, password, app_id, role } = req.body; // Add role here
             console.log('🎯 Controller received role:', role); // Debug log
-            
+
             const result = await AuthService.register(name, email, password, app_id, role);
             res.status(result.success ? 201 : 400).json(result);
         } catch (error) {
@@ -69,6 +69,40 @@ class AuthController {
             return res.status(500).json({ success: false, message: "Server error" });
         }
     }
+    
+    async sendVerificationEmail(req, res) {
+        try {
+            const { email } = req.body;
+            const result = await OTPController.sendVerificationEmail(email);
+            res.status(result.success ? 200 : 400).json(result);
+        } catch (error) {
+            console.error("Send verification email error:", error);
+            res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    async verifyEmail(req, res) {
+        try {
+            const { email, otp } = req.body;
+            const result = await OTPController.verifyEmail(email, otp);
+            res.status(result.success ? 200 : 400).json(result);
+        } catch (error) {
+            console.error("Verify email error:", error);
+            res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
+    async resendOTP(req, res) {
+        try {
+            const { email } = req.body;
+            const result = await OTPController.resendOTP(email);
+            res.status(result.success ? 200 : 400).json(result);
+        } catch (error) {
+            console.error("Resend OTP error:", error);
+            res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+
 }
 
 export default new AuthController();
