@@ -1,548 +1,519 @@
 {
-  "project": "Auth Microservice API",
-  "version": "1.0.0",
-  "baseUrl": "https://notebooks-objectives-throat-survey.trycloudflare.com/",
-  "description": "A multi-tenant authentication microservice with JWT tokens, refresh tokens, and admin management",
-  "database": "PostgreSQL with Prisma ORM",
-  "features": [
-    "Multi-tenant architecture (app_id based isolation)",
-    "JWT access & refresh tokens",
-    "Role-based access control (user/admin)",
-    "Token validation endpoint for external services",
-    "Admin user management with pagination",
-    "Rate limiting ready",
-    "CORS enabled"
-  ],
-  "authentication": {
-    "type": "Bearer Token (JWT)",
-    "tokenFormat": "Authorization: Bearer <access_token>",
-    "tokenLifetime": "1 hour",
-    "refreshTokenLifetime": "7 days"
-  },
-  "serverConfiguration": {
-    "cors": {
-      "origin": "*",
-      "methods": "*",
-      "allowedHeaders": "*",
-      "credentials": true
-    },
-    "port": "process.env.PORT || 4000",
-    "bodyParser": "express.json() enabled"
-  },
-  "endpoints": {
-    "health": {
-      "method": "GET",
-      "path": "/",
-      "description": "Health check endpoint",
-      "authentication": false,
-      "request": {},
-      "successResponse": {
-        "status": 200,
-        "body": "🚀 Prisma Auth Microservice running successfully!"
-      }
-    },
-    "register": {
-      "method": "POST",
-      "path": "/api/auth/register",
-      "description": "Register a new user",
-      "authentication": false,
-      "request": {
-        "body": {
-          "name": "string (required, min 2 chars)",
-          "email": "string (required, valid email)",
-          "password": "string (required, min 3 chars)",
-          "app_id": "string (required, existing app ID)",
-          "role": "string (optional, 'user' or 'admin', defaults to 'user')"
-        }
-      },
-      "successResponse": {
-        "status": 201,
-        "body": {
-          "success": true,
-          "message": "User registered successfully",
-          "user": {
-            "id": "uuid",
-            "name": "string",
-            "email": "string",
-            "app_id": "string",
-            "role": "string",
-            "createdAt": "ISO date string"
-          }
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 400,
-          "body": {
-            "success": false,
-            "message": "Error description"
-          }
-        }
-      ]
-    },
-    "login": {
-      "method": "POST",
-      "path": "/api/auth/login",
-      "description": "Authenticate user and get tokens",
-      "authentication": false,
-      "request": {
-        "body": {
-          "email": "string (required)",
-          "password": "string (required)",
-          "app_id": "string (required)"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "Login successful",
-          "accessToken": "jwt_token",
-          "refreshToken": "jwt_token",
-          "user": {
-            "id": "uuid",
-            "name": "string",
-            "email": "string",
-            "app_id": "string",
-            "role": "string"
-          }
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 401,
-          "body": {
-            "success": false,
-            "message": "Invalid credentials"
-          }
-        }
-      ]
-    },
-    "getProfile": {
-      "method": "GET",
-      "path": "/api/auth/me",
-      "description": "Get current user profile",
-      "authentication": true,
-      "request": {
-        "headers": {
-          "Authorization": "Bearer <access_token>"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "user": {
-            "id": "uuid",
-            "name": "string",
-            "email": "string",
-            "app_id": "string",
-            "role": "string",
-            "createdAt": "ISO date string"
-          }
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 401,
-          "body": {
-            "success": false,
-            "message": "Invalid or expired token"
-          }
-        }
-      ]
-    },
-    "validateToken": {
-      "method": "POST",
-      "path": "/api/auth/validate-token",
-      "description": "Validate any JWT token (for external services)",
-      "authentication": false,
-      "request": {
-        "body": {
-          "token": "string (required, JWT token)"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "Token is valid",
-          "user": {
-            "id": "uuid",
-            "name": "string",
-            "email": "string",
-            "app_id": "string",
-            "role": "string"
-          }
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 401,
-          "body": {
-            "success": false,
-            "message": "Invalid or expired token"
-          }
-        }
-      ]
-    },
-    "refreshToken": {
-      "method": "POST",
-      "path": "/api/auth/refresh-token",
-      "description": "Get new access token using refresh token",
-      "authentication": false,
-      "request": {
-        "body": {
-          "refreshToken": "string (required)"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "Token refreshed successfully",
-          "accessToken": "jwt_token"
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 401,
-          "body": {
-            "success": false,
-            "message": "Invalid refresh token"
-          }
-        }
-      ]
-    },
-    "logout": {
-      "method": "POST",
-      "path": "/api/auth/logout",
-      "description": "Invalidate refresh token",
-      "authentication": false,
-      "request": {
-        "body": {
-          "refreshToken": "string (required)"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "Logged out successfully"
-        }
-      }
-    },
-    "getAllUsers": {
-      "method": "GET",
-      "path": "/api/users",
-      "description": "Get paginated list of users in same app (Admin only)",
-      "authentication": true,
-      "requiredRole": "admin",
-      "request": {
-        "headers": {
-          "Authorization": "Bearer <access_token>"
+  "auth_microservice_api_guide": {
+    "name": "Auth Microservice API Guide",
+    "version": "2.0.0",
+    "description": "Complete integration guide for the multi-tenant authentication microservice with email verification",
+    "base_url": "http://localhost:4000",
+    "authentication_overview": {
+      "type": "JWT Bearer Tokens",
+      "flow": "Register → Verify Email → Login → Use Access Token → Refresh when expired",
+      "token_types": {
+        "access_token": {
+          "lifetime": "1 hour",
+          "purpose": "API authentication",
+          "format": "Bearer <token> in Authorization header"
         },
-        "query": {
-          "page": "integer (optional, default: 1)",
-          "limit": "integer (optional, default: 10, max: 100)",
-          "search": "string (optional, search in name/email)",
-          "sortBy": "string (optional, name/email/role/createdAt/updatedAt)",
-          "sortOrder": "string (optional, asc/desc)"
+        "refresh_token": {
+          "lifetime": "7 days",
+          "purpose": "Get new access tokens",
+          "storage": "Secure HTTP-only cookie recommended"
+        }
+      }
+    },
+    "quick_start": {
+      "step_1": "Register a user with your app_id",
+      "step_2": "Send verification email to user",
+      "step_3": "User verifies email with OTP",
+      "step_4": "User logs in to get tokens",
+      "step_5": "Use access token for authenticated requests",
+      "step_6": "Refresh token when expired"
+    },
+    "integration_examples": {
+      "frontend_integration": {
+        "description": "How to integrate with frontend applications",
+        "steps": [
+          "1. Register user with your app_id",
+          "2. Show email verification screen",
+          "3. After verification, login to get tokens",
+          "4. Store tokens securely (httpOnly cookies recommended)",
+          "5. Include access token in Authorization header for API calls",
+          "6. Handle token refresh automatically"
+        ],
+        "code_example": {
+          "language": "javascript",
+          "code": `
+// Login function example
+async function login(email, password, appId) {
+  const response = await fetch('http://localhost:4000/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, app_id: appId })
+  });
+  
+  const data = await response.json();
+  if (data.success) {
+    // Store tokens securely
+    localStorage.setItem('accessToken', data.accessToken);
+    document.cookie = \`refreshToken=\${data.refreshToken}; Secure; SameSite=Strict\`;
+    return data;
+  }
+  throw new Error(data.message);
+}`
         }
       },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "Users retrieved successfully",
-          "data": {
-            "users": [
-              {
+      "backend_integration": {
+        "description": "How to integrate with backend services",
+        "steps": [
+          "1. Use validate-token endpoint to verify user tokens",
+          "2. Check user role and app_id for authorization",
+          "3. Handle token expiration gracefully",
+          "4. Use admin endpoints for user management"
+        ],
+        "code_example": {
+          "language": "node.js",
+          "code": `
+// Token validation in your backend
+async function validateUserToken(token) {
+  const response = await fetch('http://localhost:4000/api/auth/validate-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  });
+  
+  const data = await response.json();
+  if (data.success) {
+    return data.user; // { id, email, app_id, role, isVerified }
+  }
+  throw new Error('Invalid token');
+}`
+        }
+      }
+    },
+    "endpoints": {
+      "authentication": {
+        "register": {
+          "method": "POST",
+          "path": "/api/auth/register",
+          "description": "Register a new user. Email verification required before login.",
+          "required_headers": {
+            "Content-Type": "application/json"
+          },
+          "request_body": {
+            "name": "string (required, min 2 characters)",
+            "email": "string (required, valid email format)",
+            "password": "string (required, min 3 characters)",
+            "app_id": "string (required, your application ID)",
+            "role": "string (optional, 'user' or 'admin', defaults to 'user')"
+          },
+          "success_response": {
+            "status": 201,
+            "body": {
+              "success": true,
+              "message": "User registered successfully. Please check your email for verification.",
+              "user": {
                 "id": "uuid",
                 "name": "string",
                 "email": "string",
-                "role": "string",
                 "app_id": "string",
-                "createdAt": "ISO date string",
-                "updatedAt": "ISO date string"
+                "role": "string",
+                "createdAt": "ISO date string"
               }
-            ],
-            "pagination": {
-              "currentPage": 1,
-              "totalPages": 1,
-              "totalUsers": 10,
-              "usersPerPage": 10,
-              "hasNextPage": false,
-              "hasPrevPage": false,
-              "nextPage": null,
-              "prevPage": null
+            }
+          },
+          "error_responses": [
+            {
+              "status": 400,
+              "scenarios": [
+                "Missing required fields",
+                "Invalid email format",
+                "Password too short",
+                "Email already registered in this app",
+                "App not found"
+              ]
+            }
+          ],
+          "integration_notes": [
+            "User cannot login until email is verified",
+            "Automatically sends verification email after registration",
+            "Store user ID for future reference"
+          ]
+        },
+        "send_verification": {
+          "method": "POST",
+          "path": "/api/auth/send-verification",
+          "description": "Send email verification OTP to user",
+          "request_body": {
+            "email": "string (required, registered email)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Verification email sent successfully"
+            }
+          },
+          "integration_notes": [
+            "Use when user requests to resend verification email",
+            "OTP expires in 10 minutes (configurable)",
+            "Limited to 5 attempts per OTP"
+          ]
+        },
+        "verify_email": {
+          "method": "POST",
+          "path": "/api/auth/verify-email",
+          "description": "Verify user email with OTP code",
+          "request_body": {
+            "email": "string (required)",
+            "otp": "string (required, 6-digit code)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Email verified successfully"
+            }
+          },
+          "error_responses": [
+            {
+              "status": 400,
+              "scenarios": [
+                "Invalid OTP",
+                "OTP expired",
+                "Too many attempts",
+                "Email already verified"
+              ]
+            }
+          ]
+        },
+        "login": {
+          "method": "POST",
+          "path": "/api/auth/login",
+          "description": "Authenticate user and receive JWT tokens",
+          "request_body": {
+            "email": "string (required)",
+            "password": "string (required)",
+            "app_id": "string (required)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Login successful",
+              "accessToken": "jwt_token (1 hour expiry)",
+              "refreshToken": "jwt_token (7 days expiry)",
+              "user": {
+                "id": "uuid",
+                "name": "string",
+                "email": "string",
+                "app_id": "string",
+                "role": "string",
+                "isVerified": "boolean"
+              }
+            }
+          },
+          "error_responses": [
+            {
+              "status": 401,
+              "scenarios": [
+                "Invalid credentials",
+                "Email not verified"
+              ]
+            }
+          ],
+          "integration_notes": [
+            "Email must be verified before login",
+            "Store both tokens securely",
+            "Use accessToken for API authentication",
+            "Use refreshToken to get new access tokens"
+          ]
+        },
+        "get_profile": {
+          "method": "GET",
+          "path": "/api/auth/me",
+          "description": "Get current authenticated user profile",
+          "required_headers": {
+            "Authorization": "Bearer <access_token>"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "user": {
+                "id": "uuid",
+                "name": "string",
+                "email": "string",
+                "app_id": "string",
+                "role": "string",
+                "isVerified": "boolean",
+                "createdAt": "ISO date string"
+              }
+            }
+          },
+          "error_responses": [
+            {
+              "status": 401,
+              "scenarios": ["Invalid or expired token"]
+            }
+          ]
+        },
+        "validate_token": {
+          "method": "POST",
+          "path": "/api/auth/validate-token",
+          "description": "Validate any JWT token (useful for external services)",
+          "request_body": {
+            "token": "string (required, JWT token to validate)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Token is valid",
+              "user": {
+                "id": "uuid",
+                "name": "string",
+                "email": "string",
+                "app_id": "string",
+                "role": "string",
+                "isVerified": "boolean"
+              }
+            }
+          },
+          "integration_notes": [
+            "Use this endpoint in your backend to validate tokens from frontend",
+            "Returns full user information if token is valid"
+          ]
+        },
+        "refresh_token": {
+          "method": "POST",
+          "path": "/api/auth/refresh-token",
+          "description": "Get new access token using refresh token",
+          "request_body": {
+            "refreshToken": "string (required, valid refresh token)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Token refreshed successfully",
+              "accessToken": "new_jwt_token"
+            }
+          },
+          "integration_notes": [
+            "Call this when access token expires (401 error)",
+            "Does not return new refresh token",
+            "Refresh tokens are single-use"
+          ]
+        },
+        "logout": {
+          "method": "POST",
+          "path": "/api/auth/logout",
+          "description": "Invalidate refresh token",
+          "request_body": {
+            "refreshToken": "string (required)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Logged out successfully"
             }
           }
         }
       },
-      "errorResponses": [
-        {
-          "status": 403,
-          "body": {
-            "success": false,
-            "message": "Admin access required"
-          }
-        }
-      ]
-    },
-    "deleteUser": {
-      "method": "DELETE",
-      "path": "/api/users/:id",
-      "description": "Delete user from same app (Admin only)",
-      "authentication": true,
-      "requiredRole": "admin",
-      "request": {
-        "headers": {
-          "Authorization": "Bearer <access_token>"
+      "user_management": {
+        "get_all_users": {
+          "method": "GET",
+          "path": "/api/users",
+          "description": "Get paginated list of users from same app (Admin only)",
+          "required_headers": {
+            "Authorization": "Bearer <admin_access_token>"
+          },
+          "query_parameters": {
+            "page": "integer (optional, default: 1)",
+            "limit": "integer (optional, default: 10, max: 100)",
+            "search": "string (optional, search in name/email)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "Users retrieved successfully",
+              "data": {
+                "users": "array of user objects",
+                "pagination": {
+                  "currentPage": "integer",
+                  "totalPages": "integer",
+                  "totalUsers": "integer",
+                  "usersPerPage": "integer",
+                  "hasNextPage": "boolean",
+                  "hasPrevPage": "boolean",
+                  "nextPage": "integer or null",
+                  "prevPage": "integer or null"
+                }
+              }
+            }
+          },
+          "error_responses": [
+            {
+              "status": 403,
+              "scenarios": ["User is not admin", "Token missing or invalid"]
+            }
+          ]
         },
-        "params": {
-          "id": "uuid (user ID to delete)"
-        }
-      },
-      "successResponse": {
-        "status": 200,
-        "body": {
-          "success": true,
-          "message": "User deleted successfully",
-          "deletedUser": {
-            "id": "uuid",
-            "email": "string"
-          }
-        }
-      },
-      "errorResponses": [
-        {
-          "status": 403,
-          "body": {
-            "success": false,
-            "message": "Admin access required"
-          }
-        },
-        {
-          "status": 400,
-          "body": {
-            "success": false,
-            "message": "Cannot delete your own account"
-          }
-        }
-      ]
-    }
-  },
-  "fileStructure": {
-    "server.js": {
-      "description": "Main server file with Express setup and middleware",
-      "features": [
-        "CORS configuration with wildcard origins",
-        "JSON body parsing",
-        "Route mounting for /api/auth and /api/users",
-        "Environment variable configuration"
-      ]
-    },
-    "controllers/user.controller.js": {
-      "description": "User management controller for admin operations",
-      "methods": {
-        "getAllUsers": {
-          "parameters": [
-            "app_id from middleware",
-            "page",
-            "limit",
-            "search from query"
-          ],
-          "functionality": "Handles paginated user retrieval with search"
-        },
-        "deleteUser": {
-          "parameters": [
-            "user id from params",
-            "adminAppId from middleware",
-            "adminUserId from token"
-          ],
-          "functionality": "Handles user deletion with safety checks"
-        }
-      }
-    },
-    "middleware/admin.middleware.js": {
-      "description": "Authentication and authorization middleware for admin routes",
-      "middlewares": {
-        "adminOnly": {
-          "function": "Verifies JWT token and checks if user has admin role",
-          "checks": ["Bearer token presence", "Token validity", "Admin role"]
-        },
-        "sameAppOnly": {
-          "function": "Ensures operations are scoped to user's app_id",
-          "checks": [
-            "Extracts app_id from token",
-            "Sets req.userAppId for service layer"
+        "delete_user": {
+          "method": "DELETE",
+          "path": "/api/users/:id",
+          "description": "Delete user from same app (Admin only)",
+          "required_headers": {
+            "Authorization": "Bearer <admin_access_token>"
+          },
+          "path_parameters": {
+            "id": "uuid (user ID to delete)"
+          },
+          "success_response": {
+            "status": 200,
+            "body": {
+              "success": true,
+              "message": "User deleted successfully",
+              "deletedUser": {
+                "id": "uuid",
+                "email": "string"
+              }
+            }
+          },
+          "error_responses": [
+            {
+              "status": 403,
+              "scenarios": ["Admin access required", "Cannot delete user from different app"]
+            },
+            {
+              "status": 400,
+              "scenarios": ["Cannot delete your own account"]
+            }
           ]
         }
       }
     },
-    "routes/user.router.js": {
-      "description": "User management routes with admin protection",
-      "routes": {
-        "GET /": "Get all users (protected by adminOnly + sameAppOnly)",
-        "DELETE /:id": "Delete user (protected by adminOnly + sameAppOnly)"
-      },
-      "middleware": "adminOnly and sameAppOnly applied to all routes"
+    "multi_tenancy": {
+      "concept": "Each application has isolated user base using app_id",
+      "implementation": "All user operations are automatically scoped to the app_id",
+      "benefits": [
+        "Data isolation between applications",
+        "Same email can be used across different apps",
+        "Independent user management per app"
+      ],
+      "getting_app_id": "Contact system administrator to register your application and get app_id"
     },
-    "services/user.service.js": {
-      "description": "Business logic for user management operations",
-      "methods": {
-        "getAllUsers": {
-          "parameters": ["app_id", "page", "limit", "search"],
-          "features": [
-            "Pagination with validation (max 100 per page)",
-            "Search across name and email fields",
-            "Total count and pagination metadata",
-            "Case-insensitive search"
-          ]
+    "error_handling": {
+      "standard_error_format": {
+        "success": false,
+        "message": "Human readable error message"
+      },
+      "common_error_codes": {
+        "400": "Bad Request - Validation errors, missing fields",
+        "401": "Unauthorized - Invalid or missing token, login required",
+        "403": "Forbidden - Insufficient permissions",
+        "404": "Not Found - Resource not found",
+        "500": "Internal Server Error - Server issues"
+      },
+      "specific_error_messages": {
+        "email_verification_required": "Please verify your email before logging in",
+        "invalid_credentials": "Invalid email or password",
+        "email_already_exists": "Email already registered in this app",
+        "token_expired": "Invalid or expired token",
+        "admin_access_required": "Admin access required",
+        "cross_app_access": "Cannot access users from different app"
+      }
+    },
+    "security_best_practices": {
+      "token_management": [
+        "Store refresh tokens in httpOnly cookies",
+        "Store access tokens in memory or secure storage",
+        "Implement automatic token refresh",
+        "Clear tokens on logout"
+      ],
+      "password_policy": [
+        "Minimum 3 characters (configurable)",
+        "Implement strong password requirements in your frontend",
+        "Never store passwords in plain text"
+      ],
+      "api_security": [
+        "Use HTTPS in production",
+        "Implement rate limiting on your endpoints",
+        "Validate all inputs",
+        "Use CORS appropriately"
+      ]
+    },
+    "testing_in_production": {
+      "test_app_id": "app_1",
+      "test_credentials": {
+        "admin_user": {
+          "email": "admin@test.com",
+          "password": "admin123",
+          "role": "admin"
         },
-        "deleteUser": {
-          "parameters": ["userId", "adminAppId"],
-          "features": [
-            "Cross-app deletion prevention",
-            "User existence validation",
-            "Cascading deletion (handled by Prisma relations)"
-          ]
+        "regular_user": {
+          "email": "user@test.com", 
+          "password": "user123",
+          "role": "user"
+        }
+      },
+      "testing_tools": [
+        "Visit / for interactive API documentation",
+        "Use the testing interface to try endpoints",
+        "Check response formats and error handling"
+      ]
+    },
+    "migration_guide": {
+      "from_v1_to_v2": [
+        "Added email verification requirement",
+        "New endpoints: send-verification, verify-email",
+        "User model now includes isVerified field",
+        "Login now requires verified email"
+      ],
+      "breaking_changes": [
+        "Users must verify email before login",
+        "Register endpoint returns different success message"
+      ]
+    },
+    "support_and_contact": {
+      "documentation": "Visit / on your deployed instance",
+      "issues": "https://github.com/Harsh9871/auth-microservices/issues",
+      "contact": "Create an issue on GitHub for support"
+    },
+    "example_integration_flow": {
+      "complete_user_journey": {
+        "step_1": {
+          "action": "Register user",
+          "endpoint": "POST /api/auth/register",
+          "purpose": "Create new user account"
+        },
+        "step_2": {
+          "action": "Send verification email", 
+          "endpoint": "POST /api/auth/send-verification",
+          "purpose": "Send OTP to user's email"
+        },
+        "step_3": {
+          "action": "Verify email",
+          "endpoint": "POST /api/auth/verify-email", 
+          "purpose": "Confirm email ownership with OTP"
+        },
+        "step_4": {
+          "action": "Login",
+          "endpoint": "POST /api/auth/login",
+          "purpose": "Get authentication tokens"
+        },
+        "step_5": {
+          "action": "Access protected routes",
+          "endpoint": "Various with Authorization header",
+          "purpose": "Use access token for API calls"
+        },
+        "step_6": {
+          "action": "Refresh token when expired",
+          "endpoint": "POST /api/auth/refresh-token",
+          "purpose": "Get new access token"
         }
       }
     }
-  },
-  "databaseSchema": {
-    "tables": {
-      "User": {
-        "columns": {
-          "id": "UUID (Primary Key)",
-          "name": "VARCHAR",
-          "email": "VARCHAR (Unique with app_id)",
-          "password": "VARCHAR (Hashed)",
-          "role": "ENUM('user', 'admin')",
-          "app_id": "VARCHAR (Foreign Key to App)",
-          "createdAt": "TIMESTAMP",
-          "updatedAt": "TIMESTAMP"
-        },
-        "indexes": [
-          "email + app_id (Composite Unique)",
-          "app_id + createdAt (Pagination)",
-          "app_id + name (Search)",
-          "app_id + email (Search)"
-        ]
-      },
-      "App": {
-        "columns": {
-          "id": "UUID (Primary Key)",
-          "name": "VARCHAR",
-          "app_id": "VARCHAR (Unique)",
-          "client_id": "VARCHAR (Unique)",
-          "client_secret": "VARCHAR",
-          "plan": "ENUM('free', 'premium')",
-          "isActive": "BOOLEAN",
-          "createdAt": "TIMESTAMP",
-          "updatedAt": "TIMESTAMP"
-        }
-      },
-      "RefreshToken": {
-        "columns": {
-          "id": "UUID (Primary Key)",
-          "token": "VARCHAR (Unique)",
-          "expiresAt": "TIMESTAMP",
-          "userId": "UUID (Foreign Key to User)",
-          "createdAt": "TIMESTAMP"
-        }
-      }
-    }
-  },
-  "environmentVariables": {
-    "PORT": "Server port (default: 4000)",
-    "DATABASE_URL": "PostgreSQL connection string",
-    "JWT_SECRET": "Secret key for JWT tokens"
-  },
-  "errorHandling": {
-    "commonErrors": [
-      {
-        "status": 400,
-        "scenarios": [
-          "Missing required fields",
-          "Invalid email format",
-          "Duplicate email"
-        ]
-      },
-      {
-        "status": 401,
-        "scenarios": ["Invalid token", "Expired token", "No token provided"]
-      },
-      {
-        "status": 403,
-        "scenarios": ["Admin access required", "Cross-app access attempted"]
-      },
-      {
-        "status": 404,
-        "scenarios": ["User not found", "App not found"]
-      },
-      {
-        "status": 500,
-        "scenarios": ["Database error", "Server error"]
-      }
-    ]
-  },
-  "securityFeatures": {
-    "passwordHashing": "bcrypt",
-    "tokenSecurity": "JWT with HS256 algorithm",
-    "dataIsolation": "app_id based multi-tenancy",
-    "inputValidation": "express-validator ready",
-    "rateLimiting": "express-rate-limit ready",
-    "cors": "Configured with wildcard (adjust for production)"
-  },
-  "testingExamples": {
-    "quickStart": [
-      "1. Register user: POST /api/auth/register",
-      "2. Login: POST /api/auth/login",
-      "3. Get profile: GET /api/auth/me",
-      "4. Validate token: POST /api/auth/validate-token"
-    ],
-    "adminWorkflow": [
-      "1. Register admin: POST /api/auth/register with role: 'admin'",
-      "2. Login as admin",
-      "3. List users: GET /api/users?page=1&limit=10",
-      "4. Delete user: DELETE /api/users/:id"
-    ],
-    "paginationExamples": [
-      "GET /api/users?page=1&limit=10",
-      "GET /api/users?page=2&limit=20&search=admin",
-      "GET /api/users?page=1&limit=50&sortBy=name&sortOrder=asc"
-    ]
-  },
-  "deployment": {
-    "productionReady": true,
-    "recommendations": [
-      "Use environment variables for secrets",
-      "Restrict CORS origins in production (replace '*')",
-      "Add rate limiting in production",
-      "Use Redis for distributed rate limiting",
-      "Add logging and monitoring",
-      "Use HTTPS in production",
-      "Set up database connection pooling"
-    ],
-    "securityNotes": [
-      "Change CORS origin from '*' to specific domains in production",
-      "Use strong JWT secrets",
-      "Enable HTTPS",
-      "Implement rate limiting"
-    ]
-  },
-  "apiUsageExamples": {
-    "getAllUsersCurl": "curl -X GET \"https://notebooks-objectives-throat-survey.trycloudflare.com/api/users?page=1&limit=10\" -H \"Authorization: Bearer <admin_token>\"",
-    "deleteUserCurl": "curl -X DELETE \"https://notebooks-objectives-throat-survey.trycloudflare.com/api/users/<user_id>\" -H \"Authorization: Bearer <admin_token>\"",
-    "searchUsersCurl": "curl -X GET \"https://notebooks-objectives-throat-survey.trycloudflare.com/api/users?page=1&limit=10&search=admin\" -H \"Authorization: Bearer <admin_token>\""
-  },
-  "notes": {
-    "multiTenancy": "Each user belongs to an app_id. All operations are scoped to the user's app_id.",
-    "tokenValidation": "External services can use /api/auth/validate-token to validate user tokens.",
-    "scalability": "Designed to handle millions of users with proper pagination and indexing.",
-    "adminRoutes": "All /api/users routes require admin role and are scoped to the same app_id."
   }
 }
